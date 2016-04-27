@@ -189,17 +189,10 @@ else :
         value="$value"
 
 if geom=='point':
-    if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
-        query_geom='footprint:\\"Intersects(%f,%f)\\"'%(options.lat,options.lon)
-    else :
-        query_geom='footprint:"Intersects(%f,%f)"'%(options.lat,options.lon)
-	
+    query_geom='footprint:\\"Intersects(%f,%f)\\"'%(options.lat,options.lon)
+   
 elif geom=='rectangle':
-    if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
-        query_geom='footprint:\\"Intersects(POLYGON(({lonmin} {latmin}, {lonmax} {latmin}, {lonmax} {latmax}, {lonmin} {latmax},{lonmin} {latmin})))\\"'.format(latmin=options.latmin,latmax=options.latmax,lonmin=options.lonmin,lonmax=options.lonmax)
-    else :
-        query_geom='footprint:"Intersects(POLYGON(({lonmin} {latmin}, {lonmax} {latmin}, {lonmax} {latmax}, {lonmin} {latmax},{lonmin} {latmin})))"'.format(latmin=options.latmin,latmax=options.latmax,lonmin=options.lonmin,lonmax=options.lonmax)
-    
+    query_geom='footprint:\\"Intersects(POLYGON(({lonmin} {latmin}, {lonmax} {latmin}, {lonmax} {latmax}, {lonmin} {latmax},{lonmin} {latmin})))\\"'.format(latmin=options.latmin,latmax=options.latmax,lonmin=options.lonmin,lonmax=options.lonmax)
 
 if options.orbit==None:
     query='%s filename:%s*'%(query_geom,options.sentinel)
