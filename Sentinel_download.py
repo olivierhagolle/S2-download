@@ -334,7 +334,7 @@ for i in range(len(request_list)):
                 if unzipped_file_exists==False and zipped_file_exists==False and options.no_download==False:
                     result = os.system(commande_wget)
                     if(result==0): #No download problem
-                        os.rename(options.write_dir+filename+".zip.tmp",options.write_dir,filename+".zip")
+                        os.rename(options.write_dir+"/"+filename+".zip.tmp",options.write_dir+"/"+filename+".zip")
                 else :
                     print(unzipped_file_exists, options.no_download)
 
