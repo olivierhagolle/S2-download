@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: iso-8859-1 -*-
-
+from __future__ import print_function
 import os,sys,math
 import optparse
 from xml.dom import minidom
