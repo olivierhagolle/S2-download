@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: iso-8859-1 -*-
-
+from __future__ import print_function
 import os,sys,math
 import optparse
 from xml.dom import minidom
@@ -45,11 +45,11 @@ def download_tree(rep,xml_file,wg,auth,wg_opt,value):
     for i in range(len(urls)):
         if length[i]==0: # then it is a directory
             nom_rep="%s/%s"%(rep,names[i])
-            print nom_rep
+            print( nom_rep)
             if not(os.path.exists(nom_rep)):
                 os.mkdir(nom_rep)
             commande_wget='%s %s %s%s "%s"'%(wg,auth,wg_opt,'files.xml',urls[i]+"/Nodes")
-            print commande_wget
+            print(commande_wget)
             os.system(commande_wget)
             while os.path.getsize("files.xml")==0 : #in case of "bad gateway error"
                 os.system(commande_wget)
@@ -65,7 +65,7 @@ def get_dir(dir_name,dir_url,product_dir_name,wg,auth,wg_opt,value):
     if not(os.path.exists(dir)) :
         os.mkdir(dir)
     commande_wget='%s %s %s%s "%s"'%(wg,auth,wg_opt,'temp.xml',dir_url)
-    print commande_wget
+    print(commande_wget)
     os.system(commande_wget)
     while os.path.getsize("temp.xml")==0 : #in case of "bad gateway error"
         os.system(commande_wget)
@@ -85,11 +85,11 @@ url_search="https://scihub.copernicus.eu/apihub/search?q="
 #==================
 if len(sys.argv) == 1:
     prog = os.path.basename(sys.argv[0])
-    print '      '+sys.argv[0]+' [options]'
-    print "     Aide : ", prog, " --help"
-    print "        ou : ", prog, " -h"
-    print "example python  %s --lat 43.6 --lon 1.44 -a apihub.txt "%sys.argv[0]
-    print "example python  %s --lat 43.6 --lon 1.44 -a apihub.txt -t 31TCJ "%sys.argv[0]
+    print( '      '+sys.argv[0]+' [options]')
+    print( "     Aide : ", prog, " --help")
+    print("        ou : ", prog, " -h")
+    print("example python  %s --lat 43.6 --lon 1.44 -a apihub.txt "%sys.argv[0])
+    print("example python  %s --lat 43.6 --lon 1.44 -a apihub.txt -t 31TCJ "%sys.argv[0])
     sys.exit(-1)
 else:
     usage = "usage: %prog [options] "
@@ -138,12 +138,14 @@ else:
             help="Try dhus interface when apihub is not working",default=False)
     parser.add_option("-r",dest="MaxRecords",action="store",type="int",  \
             help="maximum number of records to download (default=100)",default=100)
+    parser.add_option("--md5", dest="check_md5", action="store_true", \
+                      help="Download md5 sum and check the file integrity", default=False)
 
 
     (options, args) = parser.parse_args()
     if options.lat==None or options.lon==None:
         if options.latmin==None or options.lonmin==None or options.latmax==None or options.lonmax==None:
-            print "provide at least a point or  rectangle"
+            print("provide at least a point or  rectangle")
             sys.exit(-1)
         else:
             geom='rectangle'
@@ -151,10 +153,10 @@ else:
         if options.latmin==None and options.lonmin==None and options.latmax==None and options.lonmax==None:
             geom='point'
         else:
-            print "please choose between point and rectance, but not both"
+            print("please choose between point and rectance, but not both")
             sys.exit(-1)
     if options.tile!=None and options.sentinel!='S2':
-        print "The tile option (-t) can only be used for Sentinel-2"
+        print("The tile option (-t) can only be used for Sentinel-2")
         sys.exit(-1)
         
     parser.check_required("-a")    
@@ -163,13 +165,13 @@ else:
 # read password file
 #====================
 try:
-    f=file(options.apihub)
+    f=open(options.apihub)
     (account,passwd)=f.readline().split(' ')
     if passwd.endswith('\n'):
         passwd=passwd[:-1]
     f.close()
 except :
-    print "error with password file"
+    print("error with password file")
     sys.exit(-2)
 
 			
@@ -267,8 +269,8 @@ if options.MaxRecords > 100:
         else:
             request_list.append('%s %s %s "%s%s&rows=%d&start=%d"'%(wg,auth,search_output,url_search,query,100,i*100))
 else:
-    commande_wget='%s %s %s "%s%s&rows=%d"'%(wg,auth,search_output,url_search,query,options.MaxRecords)
-    print commande_wget
+    commande_wget='%s %s %s "%s%s&rows=%d&format=text/cvs"'%(wg,auth,search_output,url_search,query,options.MaxRecords)
+    print(commande_wget)
     request_list = [commande_wget]
 
 
@@ -299,16 +301,16 @@ for i in range(len(request_list)):
         elif  options.sentinel.startswith("S1"):
             date_prod=filename.split('_')[5][0:8]
         else :
-            print "Please choose either S1 or S2"
+            print( "Please choose either S1 or S2")
             sys.exit(-1)
 
         if date_prod>=start_date and date_prod<=end_date:
 
             # print what has been found
-            print "\n==============================================="
-            print date_prod,start_date,end_date
-            print filename
-            print link
+            print("\n===============================================")
+            print(date_prod,start_date,end_date)
+            print(filename)
+            print(link)
             if options.dhus==True:
                 link=link.replace("apihub","dhus")
 
@@ -318,22 +320,49 @@ for i in range(len(request_list)):
                     (name,field)=node.attributes.items()[0]
                     if field=="cloudcoverpercentage":
                         cloud=float((node.toxml()).split('>')[1].split('<')[0])
-                        print "cloud percentage = %5.2f %%"%cloud
+                        print("cloud percentage = %5.2f %%"%cloud)
  
 
-            print "===============================================\n"
+            print("===============================================\n")
 
 
             #==================================download  whole product
             if( cloud<options.max_cloud or (options.sentinel.find("S1")>=0)) and options.tile==None:
-                commande_wget='%s %s %s%s/%s "%s"'%(wg,auth,wg_opt,options.write_dir,filename+".zip",link)
+                commande_wget='%s %s %s%s/%s "%s"'%(wg,auth,wg_opt,options.write_dir,filename+".zip.tmp",link)
                 #do not download the product if it was already downloaded and unzipped, or if no_download option was selected.
                 unzipped_file_exists= os.path.exists(("%s/%s")%(options.write_dir,filename))
-                print commande_wget
-                if unzipped_file_exists==False and options.no_download==False:
-                    os.system(commande_wget)
+                zipped_file_exists= os.path.exists(("%s/%s")%(options.write_dir,filename+".zip"))
+                L2A_dir_name = filename.replace("L1C","L2A")
+                L2A__file_exists = os.path.exists(("%s/%s")%(options.write_dir,L2A_dir_name))
+                L2A_dir_name = filename.replace("OPER", "USER")
+                L2A__file_exists |= os.path.exists(("%s/%s") % (options.write_dir, L2A_dir_name))
+                print(commande_wget)
+                if unzipped_file_exists==False and zipped_file_exists==False and L2A__file_exists==False and options.no_download==False:
+                    result = os.system(commande_wget)
+                    #if options.check_md5:
+                    if(result==0): #No download problem
+                        if options.check_md5:
+                            os.remove(options.write_dir + "/" + filename + ".zip.md5")
+                            link_md5 = link = link.replace(value, "Checksum/Value/" + value)
+                            commande_wget = '%s %s %s%s/%s "%s"' % (
+                                wg, auth, wg_opt, options.write_dir, filename + ".zip.md5", link_md5)
+                            result = os.system(commande_wget)
+                            if (result == 0):  # md5 download whithout problem concat file name to result
+                                with open(options.write_dir + "/" + filename + ".zip.md5", "a") as md5File:
+                                    md5File.write(" " + options.write_dir + "/" + filename + ".zip.tmp" )
+                                    md5File.close()
+                                md5cmd = "md5sum -c " + options.write_dir + filename + ".zip.md5"
+                                result = os.system(md5cmd)
+                                if result: #error in md5checsum
+                                    print("Error in md5 verification of file aborting",options.write_dir + filename + ".zip.tmp")
+                                    #exit(-1)
+                        if result ==0:
+                            os.rename(options.write_dir+"/"+filename+".zip.tmp",options.write_dir+"/"+filename+".zip")
+                            pass
+
+
                 else :
-                    print unzipped_file_exists, options.no_download
+                    print(unzipped_file_exists, options.no_download)
 
         # download only one tile, file by file.
             elif options.tile!=None:
@@ -350,8 +379,8 @@ for i in range(len(request_list)):
                                     unzipped_tile_exists= True
 
                 if unzipped_tile_exists or options.no_download:
-                    print unzipped_tile_exists, options.no_download
-                    print "tile already exists or option -n is set, skipping this download"
+                    print(unzipped_tile_exists, options.no_download)
+                    print("tile already exists or option -n is set, skipping this download")
                 else:
                     #find URL of header file
                     url_file_dir=link.replace(value,"Nodes('%s')/Nodes"%(filename))
@@ -369,7 +398,7 @@ for i in range(len(request_list)):
 
                     #retrieve list of granules
                     url_granule_dir=link.replace(value,"Nodes('%s')/Nodes('GRANULE')/Nodes"%(filename))
-                    print url_granule_dir
+                    print(url_granule_dir)
                     commande_wget='%s %s %s%s "%s"'%(wg,auth,wg_opt,'granule_dir.xml',url_granule_dir)
                     os.system(commande_wget)
                     while os.path.getsize('granule_dir.xml')==0 : #in case of "bad gateway error"
@@ -381,9 +410,9 @@ for i in range(len(request_list)):
                         if names[i].find(options.tile)>0:
                             granule=names[i]
                     if granule==None:
-                        print "========================================================================"
-                        print "Tile %s is not available within product (check coordinates or tile name)"%options.tile
-                        print "========================================================================"
+                        print("========================================================================")
+                        print("Tile %s is not available within product (check coordinates or tile name)"%options.tile)
+                        print("========================================================================")
                     else :
                         #create product directory
                         product_dir_name=("%s/%s"%(options.write_dir,filename))
@@ -399,9 +428,9 @@ for i in range(len(request_list)):
                         if not(os.path.exists(nom_rep_tuile)) :
                             os.mkdir(nom_rep_tuile)
                         # download product header file
-                        print "############################################### header"
+                        print("############################################### header")
                         commande_wget='%s %s %s%s "%s"'%(wg,auth,wg_opt,product_dir_name+'/'+xml,url_header+"/"+value)
-                        print commande_wget
+                        print(commande_wget)
                         os.system(commande_wget)
                         while os.path.getsize(product_dir_name+'/'+xml)==0 : #in case of "bad gateway error"
                             os.system(commande_wget)
@@ -409,7 +438,7 @@ for i in range(len(request_list)):
                         url_inspire=link.replace(value,"Nodes('%s')/Nodes('INSPIRE.xml')/"%(filename))
                         commande_wget='%s %s %s%s "%s"'%(wg,auth,wg_opt,product_dir_name+'/'+"INSPIRE.xml",url_inspire+"/"+value)
 
-                        print commande_wget
+                        print(commande_wget)
                         os.system(commande_wget)
                         while os.path.getsize(product_dir_name+'/'+"INSPIRE.xml")==0 : #in case of "bad gateway error"
                             os.system(commande_wget)
@@ -417,7 +446,7 @@ for i in range(len(request_list)):
                         #download manifest.safe
                         url_manifest=link.replace(value,"Nodes('%s')/Nodes('manifest.safe')/"%(filename))
                         commande_wget='%s %s %s%s "%s"'%(wg,auth,wg_opt,product_dir_name+'/'+"manifest.safe",url_manifest+"/"+value)
-                        print commande_wget
+                        print(commande_wget)
                         os.system(commande_wget)
                         while os.path.getsize(product_dir_name+'/'+"manifest.safe")==0 : #in case of "bad gateway error"
                             os.system(commande_wget)
@@ -442,7 +471,7 @@ for i in range(len(request_list)):
                         # granule files
                         url_granule="%s('%s')/Nodes"%(url_granule_dir,granule)
                         commande_wget='%s %s %s%s "%s"'%(wg,auth,wg_opt,'granule.xml',url_granule)
-                        print commande_wget
+                        print(commande_wget)
                         os.system(commande_wget)
                         while os.path.getsize("granule.xml")==0 : #in case of "bad gateway error"
                             os.system(commande_wget)
