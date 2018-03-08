@@ -138,6 +138,8 @@ else:
             help="Try dhus interface when apihub is not working",default=False)
     parser.add_option("-r",dest="MaxRecords",action="store",type="int",  \
             help="maximum number of records to download (default=100)",default=100)
+    parser.add_option("--md5", dest="check_md5", action="store_true", \
+                      help="Download md5 sum and check the file integrity", default=False)
 
 
     (options, args) = parser.parse_args()
@@ -330,11 +332,35 @@ for i in range(len(request_list)):
                 #do not download the product if it was already downloaded and unzipped, or if no_download option was selected.
                 unzipped_file_exists= os.path.exists(("%s/%s")%(options.write_dir,filename))
                 zipped_file_exists= os.path.exists(("%s/%s")%(options.write_dir,filename+".zip"))
+                L2A_dir_name = filename.replace("L1C","L2A")
+                L2A__file_exists = os.path.exists(("%s/%s")%(options.write_dir,L2A_dir_name))
+                L2A_dir_name = filename.replace("OPER", "USER")
+                L2A__file_exists |= os.path.exists(("%s/%s") % (options.write_dir, L2A_dir_name))
                 print(commande_wget)
-                if unzipped_file_exists==False and zipped_file_exists==False and options.no_download==False:
+                if unzipped_file_exists==False and zipped_file_exists==False and L2A__file_exists==False and options.no_download==False:
                     result = os.system(commande_wget)
+                    #if options.check_md5:
                     if(result==0): #No download problem
-                        os.rename(options.write_dir+"/"+filename+".zip.tmp",options.write_dir+"/"+filename+".zip")
+                        if options.check_md5:
+                            os.remove(options.write_dir + "/" + filename + ".zip.md5")
+                            link_md5 = link = link.replace(value, "Checksum/Value/" + value)
+                            commande_wget = '%s %s %s%s/%s "%s"' % (
+                                wg, auth, wg_opt, options.write_dir, filename + ".zip.md5", link_md5)
+                            result = os.system(commande_wget)
+                            if (result == 0):  # md5 download whithout problem concat file name to result
+                                with open(options.write_dir + "/" + filename + ".zip.md5", "a") as md5File:
+                                    md5File.write(" " + options.write_dir + "/" + filename + ".zip.tmp" )
+                                    md5File.close()
+                                md5cmd = "md5sum -c " + options.write_dir + filename + ".zip.md5"
+                                result = os.system(md5cmd)
+                                if result: #error in md5checsum
+                                    print("Error in md5 verification of file aborting",options.write_dir + filename + ".zip.tmp")
+                                    #exit(-1)
+                        if result ==0:
+                            os.rename(options.write_dir+"/"+filename+".zip.tmp",options.write_dir+"/"+filename+".zip")
+                            pass
+
+
                 else :
                     print(unzipped_file_exists, options.no_download)
 
